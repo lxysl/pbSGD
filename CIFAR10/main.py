@@ -20,7 +20,8 @@ from models.resnet import ResNet50
 from models.densenet import DenseNet121
 from utils import get_lr, get_gamma
 
-from pbSGD import pbSGD
+from pbSGD.pbSGD import pbSGD
+from pbSGD.pbAdam import pbAdam
 from tensorboardX import SummaryWriter
 
 device = 'cuda'
@@ -30,9 +31,9 @@ history = collections.defaultdict(lambda: [])
 def get_parser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
     parser.add_argument('--arch', default='resnet50', type=str, help='model arch')
-    parser.add_argument('--optim', default='SGDM', type=str, help='train optimizer', 
-                        choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad', 
-                        'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad'])
+    parser.add_argument('--optim', default='SGDM', type=str, help='train optimizer',
+                        choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad',
+                        'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam'])
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
     parser.add_argument('--gamma', default=0.8, type=float, help='control pb value')
     parser.add_argument('--momentum', default=0., type=float, help='pbSGD momentum')
@@ -89,7 +90,9 @@ def get_optimizer(args, net):
         return optim.Adamax(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     elif args.optim == 'AMSGrad':
         return optim.Adam(net.parameters(), lr=args.lr, weight_decay=args.weight_decay, amsgrad=True)
-    
+    elif args.optim == 'pbAdam':
+        return pbAdam(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+
 def build_model():
     # Model
     print('\n==> Building model..')
@@ -178,7 +181,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.device
 
 if args.save_name:
     name = args.save_name
-elif args.optim not in ['pbSGD', 'pbSGDM']:
+elif args.optim not in ['pbSGD', 'pbSGDM', 'pbAdam']:
     name = '{}_lr={}'.format(args.optim, args.lr)
 else:
     name = '{}_lr={}_gamma={}'.format(args.optim, args.lr, args.gamma)
