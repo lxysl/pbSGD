@@ -43,7 +43,8 @@ parser.add_argument('--wandb', action='store_true', help='use wandb')
 best_prec = 0
 
 args = parser.parse_args()
-os.environ['CUDA_VISIBLE_DEVICES'] = args.devices
+# os.environ['CUDA_VISIBLE_DEVICES'] = args.devices
+device = torch.device("cuda:{}'".format(args.devices)) if torch.cuda.is_available() else torch.device("cpu")
 if torch.__version__ >= '2.0.0':
     torch.set_float32_matmul_precision('high')
 
@@ -103,8 +104,8 @@ def main():
 
         if torch.__version__ >= '2.0.0':
             model = torch.compile(model)
-        model = nn.DataParallel(model).cuda()
-        criterion = nn.CrossEntropyLoss().cuda()
+        # model = nn.DataParallel(model).cuda(device)
+        criterion = nn.CrossEntropyLoss().cuda(device)
 
         if args.optim == 'SGDM':
             optimizer = optim.SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
@@ -230,7 +231,7 @@ def train(trainloader, model, criterion, optimizer, epoch):
         # measure data loading time
         data_time.update(time.time() - end)
 
-        input, target = input.cuda(), target.cuda()
+        input, target = input.cuda(device), target.cuda(device)
 
         # compute output
         output = model(input)
@@ -276,7 +277,7 @@ def validate(val_loader, model, criterion, epoch):
     end = time.time()
     with torch.no_grad():
         for i, (input, target) in enumerate(val_loader):
-            input, target = input.cuda(), target.cuda()
+            input, target = input.cuda(device), target.cuda(device)
 
             # compute output
             output = model(input)
