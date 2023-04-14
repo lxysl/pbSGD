@@ -2,6 +2,7 @@ import argparse
 import os
 import time
 import shutil
+import datetime
 
 import numpy as np
 
@@ -10,7 +11,6 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
-
 
 import torchvision
 import torchvision.transforms as transforms
@@ -21,9 +21,11 @@ from pbSGD import pbSGD
 from collections import defaultdict
 from tensorboardX import SummaryWriter
 
+import wandb
+
 parser = argparse.ArgumentParser(description='PyTorch Cifar10 Training')
 parser.add_argument('--arch', default='resnext', type=str, help='model arch')
-parser.add_argument('--epochs', default=200, type=int, metavar='N', help='number of total epochs to run')
+parser.add_argument('--epochs', default=120, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N', help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=128, type=int, metavar='N', help='mini-batch size (default: 128),only used for train')
 parser.add_argument('--optim', default='SGDM', type=str, choices=['SGDM', 'Adam', 'RMSprop', 'Adagrad', 'pbSGD', 'pbSGDM'], help='select optimizer')
@@ -36,11 +38,13 @@ parser.add_argument('--save-name', default=None, type=str, help='save history na
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true', help='evaluate model on validation set')
 parser.add_argument('-ct', '--cifar-type', default=100, type=int, metavar='CT', help='10 for cifar10,100 for cifar100 (default: 100)')
 parser.add_argument('--devices', type=str, default='0', help='select GPUs')
+parser.add_argument('--wandb', action='store_true', help='use wandb')
 
 best_prec = 0
 
 args = parser.parse_args()
 os.environ['CUDA_VISIBLE_DEVICES'] = args.devices
+torch.set_float32_matmul_precision('high')
 
 if args.save_name:
     name = args.save_name
@@ -50,6 +54,12 @@ else:
     name = '{}_lr={}_gamma={}'.format(args.optim, args.lr, args.gamma)
 
 writer = SummaryWriter('runs/{}'.format(name))
+
+cur_time = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+if args.wandb:
+    wandb.init(project="pbAdam", name=cur_time, config=vars(args))
+    print(vars(args))
+
 
 def main():
     global args, best_prec
@@ -74,6 +84,8 @@ def main():
 
         if args.arch == 'resnext':
             model = resneXt_cifar(depth=29, cardinality=16, baseWidth=64, num_classes=100)
+        elif args.arch == 'wide_resnet':
+            model = wide_resnet_cifar(depth=26, width=10, num_classes=100)
         elif args.arch == 'densenet':
             model = densenet_BC_cifar(depth=250, k=24, num_classes=100)
 
@@ -88,9 +100,10 @@ def main():
             print('model type unrecognized...')
             return
 
+        model = torch.compile(model)
         model = nn.DataParallel(model).cuda()
         criterion = nn.CrossEntropyLoss().cuda()
-        
+
         if args.optim == 'SGDM':
             optimizer = optim.SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
         elif args.optim == 'Adam':
@@ -102,7 +115,7 @@ def main():
         elif args.optim == 'pbSGD':
             optimizer = pbSGD(model.parameters(), args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
         elif args.optim == 'pbSGDM':
-            optimizer = pbSGDM(model.parameters(), args.lr, gamma=args.gamma, momentum=args.momentum, weight_decay=args.weight_decay)
+            optimizer = pbSGD(model.parameters(), args.lr, gamma=args.gamma, momentum=args.momentum, weight_decay=args.weight_decay)
         cudnn.benchmark = True
     else:
         print('Cuda is not available!')
@@ -115,8 +128,8 @@ def main():
         normalize = transforms.Normalize(mean=[0.491, 0.482, 0.447], std=[0.247, 0.243, 0.262])
 
         train_dataset = torchvision.datasets.CIFAR10(
-            root='./data', 
-            train=True, 
+            root='./data',
+            train=True,
             download=True,
             transform=transforms.Compose([
                 transforms.RandomCrop(32, padding=4),
@@ -173,14 +186,19 @@ def main():
         train(trainloader, model, criterion, optimizer, epoch)
 
         # evaluate on test set
-        prec = validate(testloader, model, criterion)
+        prec = validate(testloader, model, criterion, epoch)
 
         # remember best precision and save checkpoint
         is_best = prec > best_prec
-        best_prec = max(prec,best_prec)
+        best_prec = max(prec, best_prec)
+
+    if args.wandb:
+        wandb.finish()
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self):
         self.reset()
 
@@ -236,13 +254,16 @@ def train(trainloader, model, criterion, optimizer, epoch):
                   'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                   'Prec {top1.val:.3f}% ({top1.avg:.3f}%)'.format(
-                   epoch, i, len(trainloader), batch_time=batch_time,
-                   data_time=data_time, loss=losses, top1=top1))
+                epoch, i, len(trainloader), batch_time=batch_time,
+                data_time=data_time, loss=losses, top1=top1))
 
     writer.add_scalar('train/loss', losses.avg, epoch)
     writer.add_scalar('train/acc', top1.avg, epoch)
+    if args.wandb:
+        wandb.log({'train loss': losses.avg, 'train acc': top1.avg}, step=epoch)
 
-def validate(val_loader, model, criterion):
+
+def validate(val_loader, model, criterion, epoch):
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -270,16 +291,19 @@ def validate(val_loader, model, criterion):
 
             if i % args.print_freq == 0:
                 print('Test: [{0}/{1}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Prec {top1.val:.3f}% ({top1.avg:.3f}%)'.format(
-                   i, len(val_loader), batch_time=batch_time, loss=losses,
-                   top1=top1))
+                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                      'Prec {top1.val:.3f}% ({top1.avg:.3f}%)'.format(
+                    i, len(val_loader), batch_time=batch_time, loss=losses,
+                    top1=top1))
 
     print(' * Prec {top1.avg:.3f}% '.format(top1=top1))
 
     writer.add_scalar('val/loss', losses.avg, epoch)
     writer.add_scalar('val/acc', top1.avg, epoch)
+
+    if args.wandb:
+        wandb.log({'val loss': losses.avg, 'val acc': top1.avg})
 
     return top1.avg
 
@@ -313,6 +337,6 @@ def adjust_learning_rate(optimizer, epoch, model_type):
         param_group['lr'] = lr
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
 

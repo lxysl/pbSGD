@@ -1,5 +1,6 @@
 '''Train CIFAR10 with PyTorch.'''
 from __future__ import print_function
+import datetime
 
 import numpy as np
 
@@ -24,8 +25,11 @@ from pbSGD.pbSGD import pbSGD
 from pbSGD.pbAdam import pbAdam
 from tensorboardX import SummaryWriter
 
+import wandb
+
 device = 'cuda'
 
+torch.set_float32_matmul_precision('high')
 history = collections.defaultdict(lambda: [])
 
 def get_parser():
@@ -42,6 +46,7 @@ def get_parser():
     parser.add_argument('--device', default='0', type=str,help='setu GPU device ID')
     parser.add_argument('--epoch', default=160, type=int,help='train epoch nums')
     parser.add_argument('--save-name', default=None, type=str, help='save history name')
+    parser.add_argument('--wandb', action='store_true', help='use wandb')
 
     args = parser.parse_args()
     return args
@@ -144,12 +149,15 @@ def train(epoch):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-    print('Train Loss: %.3f | Acc: %.3f%% (%d/%d)' % (train_loss/(batch_idx+1), 
+    print('Train Loss: %.3f | Acc: %.3f%% (%d/%d)' % (train_loss/(batch_idx+1),
             100.*correct/total, correct, total))
 
     writer.add_scalar('train/loss', train_loss/(batch_idx+1), epoch)
     writer.add_scalar('train/acc', 100.*correct/total, epoch)
-    
+
+    if args.wandb:
+        wandb.log({'train loss': train_loss/(batch_idx+1), 'train acc': 100.*correct/total}, step=epoch)
+
 def test(epoch):
     global best_acc
     net.eval()
@@ -172,6 +180,9 @@ def test(epoch):
     writer.add_scalar('val/loss', test_loss/(batch_idx+1), epoch)
     writer.add_scalar('val/acc', 100.*correct/total, epoch)
 
+    if args.wandb:
+        wandb.log({'val loss': test_loss/(batch_idx+1), 'val acc': 100.*correct/total}, step=epoch)
+
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
@@ -185,15 +196,22 @@ elif args.optim not in ['pbSGD', 'pbSGDM', 'pbAdam']:
     name = '{}_lr={}'.format(args.optim, args.lr)
 else:
     name = '{}_lr={}_gamma={}'.format(args.optim, args.lr, args.gamma)
-    
+
 writer = SummaryWriter('runs/{}'.format(name))
 
+cur_time = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+if args.wandb:
+    wandb.init(project="pbAdam", name=cur_time, config=vars(args))
+    print(vars(args))
+
 trainloader, testloader = build_dataset()
-    
+
 net = build_model()
 
+net = torch.compile(net)
+
 criterion = nn.CrossEntropyLoss()
-    
+
 optimizer = get_optimizer(args, net)
 
 step_decay = optim.lr_scheduler.StepLR(optimizer, step_size=60, gamma=0.1)
@@ -204,5 +222,8 @@ for epoch in range(start_epoch, start_epoch + args.epoch):
     test(epoch)
 
 writer.close()
-    
+
 print('\n==> Save History Complete\n')
+
+if args.wandb:
+    wandb.finish()

@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from torch.optim.optimizer import Optimizer, required
 
+
 class pbSGD(Optimizer):
     r"""Implements pbSGD (optionally with momentum as pbSGDM).
     This has been proposed in 'pbSGD: Powered Stochastic Gradient Descent 
@@ -76,6 +77,7 @@ class pbSGD(Optimizer):
                         d_p = buf
 
                 p.data.add_(d_p, alpha=-group['lr'])
+
         self.iteration += 1
 
         return loss
