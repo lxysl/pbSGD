@@ -100,7 +100,8 @@ def main():
             print('model type unrecognized...')
             return
 
-        model = torch.compile(model)
+        if torch.__version__ >= '2.0.0':
+            model = torch.compile(model)
         model = nn.DataParallel(model).cuda()
         criterion = nn.CrossEntropyLoss().cuda()
 

@@ -208,7 +208,8 @@ trainloader, testloader = build_dataset()
 
 net = build_model()
 
-net = torch.compile(net)
+if torch.__version__ >= '2.0.0':
+    net = torch.compile(net)
 
 criterion = nn.CrossEntropyLoss()
 
