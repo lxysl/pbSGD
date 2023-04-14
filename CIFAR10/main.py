@@ -51,9 +51,6 @@ def get_parser():
     return args
 
 
-device = torch.device("cuda:{}'".format(args.devices)) if torch.cuda.is_available() else torch.device("cpu")
-
-
 def build_dataset():
     # Data
     print('\n==> Preparing data..')
@@ -191,7 +188,8 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 args = get_parser()
 
-os.environ['CUDA_VISIBLE_DEVICES'] = args.device
+device = torch.device("cuda:{}".format(args.devices)) if torch.cuda.is_available() else torch.device("cpu")
+# os.environ['CUDA_VISIBLE_DEVICES'] = args.device
 
 if args.save_name:
     name = args.save_name

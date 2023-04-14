@@ -44,7 +44,7 @@ best_prec = 0
 
 args = parser.parse_args()
 # os.environ['CUDA_VISIBLE_DEVICES'] = args.devices
-device = torch.device("cuda:{}'".format(args.devices)) if torch.cuda.is_available() else torch.device("cpu")
+device = torch.device("cuda:{}".format(args.devices)) if torch.cuda.is_available() else torch.device("cpu")
 if torch.__version__ >= '2.0.0':
     torch.set_float32_matmul_precision('high')
 
