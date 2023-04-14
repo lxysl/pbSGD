@@ -104,7 +104,8 @@ def main():
 
         if torch.__version__ >= '2.0.0':
             model = torch.compile(model)
-        # model = nn.DataParallel(model).cuda(device)
+        # model = nn.DataParallel(model)
+        model = model.to(device)
         criterion = nn.CrossEntropyLoss().cuda(device)
 
         if args.optim == 'SGDM':
