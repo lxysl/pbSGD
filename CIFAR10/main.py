@@ -29,7 +29,8 @@ import wandb
 
 device = 'cuda'
 
-torch.set_float32_matmul_precision('high')
+if torch.__version__ >= '2.0.0':
+    torch.set_float32_matmul_precision('high')
 history = collections.defaultdict(lambda: [])
 
 def get_parser():

@@ -44,7 +44,8 @@ best_prec = 0
 
 args = parser.parse_args()
 os.environ['CUDA_VISIBLE_DEVICES'] = args.devices
-torch.set_float32_matmul_precision('high')
+if torch.__version__ >= '2.0.0':
+    torch.set_float32_matmul_precision('high')
 
 if args.save_name:
     name = args.save_name
