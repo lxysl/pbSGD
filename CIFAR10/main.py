@@ -30,12 +30,13 @@ if torch.__version__ >= '2.0.0':
     torch.set_float32_matmul_precision('high')
 history = collections.defaultdict(lambda: [])
 
+
 def get_parser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
     parser.add_argument('--arch', default='resnet50', type=str, help='model arch')
     parser.add_argument('--optim', default='SGDM', type=str, help='train optimizer',
                         choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad',
-                        'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam'])
+                        'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam', 'pbAdam2'])
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
     parser.add_argument('--gamma', default=0.8, type=float, help='control pb value')
     parser.add_argument('--momentum', default=0., type=float, help='pbSGD momentum')
@@ -75,6 +76,7 @@ def build_dataset():
 
     return trainloader, testloader
 
+
 def get_optimizer(args, net):
     if args.optim == 'SGDM':
         return optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.weight_decay)
@@ -96,6 +98,9 @@ def get_optimizer(args, net):
         return optim.Adam(net.parameters(), lr=args.lr, weight_decay=args.weight_decay, amsgrad=True)
     elif args.optim == 'pbAdam':
         return pbAdam(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+    elif args.optim == 'pbAdam2':
+        return pbAdam2(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+
 
 def build_model():
     # Model
@@ -125,6 +130,7 @@ def build_model():
         cudnn.benchmark = True
 
     return net
+
 
 # Training
 def train(epoch):
@@ -157,6 +163,7 @@ def train(epoch):
     if args.wandb:
         wandb.log({'train loss': train_loss/(batch_idx+1), 'train acc': 100.*correct/total}, step=epoch)
 
+
 def test(epoch):
     global best_acc
     net.eval()
@@ -181,6 +188,7 @@ def test(epoch):
 
     if args.wandb:
         wandb.log({'val loss': test_loss/(batch_idx+1), 'val acc': 100.*correct/total}, step=epoch)
+
 
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
