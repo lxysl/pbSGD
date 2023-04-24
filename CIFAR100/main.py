@@ -15,9 +15,12 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torchvision.transforms as transforms
 
-from models import *
+from models.resnet_cifar import *
+from models.wide_resnet_cifar import *
+from models.resnext_cifar import *
+from models.densenet_cifar import *
 from utils import accuracy
-from pbSGD import pbSGD
+from pbSGD import *
 from collections import defaultdict
 from tensorboardX import SummaryWriter
 
@@ -120,6 +123,8 @@ def main():
             optimizer = pbSGD(model.parameters(), args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
         elif args.optim == 'pbSGDM':
             optimizer = pbSGD(model.parameters(), args.lr, gamma=args.gamma, momentum=args.momentum, weight_decay=args.weight_decay)
+        elif args.optim == 'pbAdam':
+            optimizer = pbAdam(model.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
         cudnn.benchmark = True
     else:
         print('Cuda is not available!')
@@ -192,7 +197,7 @@ def main():
         # evaluate on test set
         prec = validate(testloader, model, criterion, epoch)
 
-        # remember best precision and save checkpoint
+        # remember the best precision and save checkpoint
         is_best = prec > best_prec
         best_prec = max(prec, best_prec)
 

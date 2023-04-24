@@ -21,8 +21,7 @@ from models.resnet import ResNet50
 from models.densenet import DenseNet121
 from utils import get_lr, get_gamma
 
-from pbSGD.pbSGD import pbSGD
-from pbSGD.pbAdam import pbAdam
+from pbSGD import *
 from tensorboardX import SummaryWriter
 
 import wandb
@@ -193,7 +192,7 @@ device = torch.device("cuda:{}".format(args.devices)) if torch.cuda.is_available
 
 if args.save_name:
     name = args.save_name
-elif args.optim not in ['pbSGD', 'pbSGDM', 'pbAdam']:
+elif 'pb' not in args.optim:
     name = '{}_lr={}'.format(args.optim, args.lr)
 else:
     name = '{}_lr={}_gamma={}'.format(args.optim, args.lr, args.gamma)
