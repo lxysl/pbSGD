@@ -195,7 +195,7 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 args = get_parser()
 
-device = torch.device("cuda:{}".format(args.devices)) if torch.cuda.is_available() else torch.device("cpu")
+device = torch.device("cuda:{}".format(args.device)) if torch.cuda.is_available() else torch.device("cpu")
 # os.environ['CUDA_VISIBLE_DEVICES'] = args.device
 
 if args.save_name:

@@ -31,7 +31,7 @@ parser.add_argument('--arch', default='resnext', type=str, help='model arch')
 parser.add_argument('--epochs', default=120, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N', help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=128, type=int, metavar='N', help='mini-batch size (default: 128),only used for train')
-parser.add_argument('--optim', default='SGDM', type=str, choices=['SGDM', 'Adam', 'RMSprop', 'Adagrad', 'pbSGD', 'pbSGDM'], help='select optimizer')
+parser.add_argument('--optim', default='SGDM', type=str, choices=['SGDM', 'Adam', 'RMSprop', 'Adagrad', 'pbSGD', 'pbSGDM', 'pbAdam', 'pbAdam2'], help='select optimizer')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float, metavar='LR', help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M', help='momentum')
 parser.add_argument('--gamma', default=1.0, type=float, help='hyperparameter gamma of powerball')
@@ -53,7 +53,7 @@ if torch.__version__ >= '2.0.0':
 
 if args.save_name:
     name = args.save_name
-elif args.optim not in ['pbSGD', 'pbSGDM']:
+elif 'pb' not in args.optim:
     name = '{}_lr={}'.format(args.optim, args.lr)
 else:
     name = '{}_lr={}_gamma={}'.format(args.optim, args.lr, args.gamma)
