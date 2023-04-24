@@ -36,7 +36,8 @@ def get_parser():
     parser.add_argument('--arch', default='resnet50', type=str, help='model arch')
     parser.add_argument('--optim', default='SGDM', type=str, help='train optimizer',
                         choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad',
-                        'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam', 'pbAdam2'])
+                        'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam', 'pbAdam2',
+                        'AdamW', 'pbAdamW'])
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
     parser.add_argument('--gamma', default=0.8, type=float, help='control pb value')
     parser.add_argument('--momentum', default=0., type=float, help='pbSGD momentum')
@@ -100,6 +101,10 @@ def get_optimizer(args, net):
         return pbAdam(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
     elif args.optim == 'pbAdam2':
         return pbAdam2(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+    elif args.optim == 'AdamW':
+        return optim.AdamW(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    elif args.optim == 'pbAdamW':
+        return pbAdamW(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
 
 
 def build_model():

@@ -31,7 +31,7 @@ parser.add_argument('--arch', default='resnext', type=str, help='model arch')
 parser.add_argument('--epochs', default=120, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N', help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=128, type=int, metavar='N', help='mini-batch size (default: 128),only used for train')
-parser.add_argument('--optim', default='SGDM', type=str, choices=['SGDM', 'Adam', 'RMSprop', 'Adagrad', 'pbSGD', 'pbSGDM', 'pbAdam', 'pbAdam2'], help='select optimizer')
+parser.add_argument('--optim', default='SGDM', type=str, choices=['SGDM', 'Adam', 'RMSprop', 'Adagrad', 'pbSGD', 'pbSGDM', 'pbAdam', 'pbAdam2', 'AdamW', 'pbAdamW'], help='select optimizer')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float, metavar='LR', help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M', help='momentum')
 parser.add_argument('--gamma', default=1.0, type=float, help='hyperparameter gamma of powerball')
@@ -125,6 +125,12 @@ def main():
             optimizer = pbSGD(model.parameters(), args.lr, gamma=args.gamma, momentum=args.momentum, weight_decay=args.weight_decay)
         elif args.optim == 'pbAdam':
             optimizer = pbAdam(model.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+        elif args.optim == 'pbAdam2':
+            optimizer = pbAdam2(model.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+        elif args.optim == 'AdamW':
+            optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        elif args.optim == 'pbAdamW':
+            optimizer = pbAdamW(model.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
         cudnn.benchmark = True
     else:
         print('Cuda is not available!')
