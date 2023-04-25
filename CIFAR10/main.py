@@ -37,14 +37,14 @@ def get_parser():
     parser.add_argument('--optim', default='SGDM', type=str, help='train optimizer',
                         choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad',
                         'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam', 'pbAdam2',
-                        'AdamW', 'pbAdamW'])
+                        'AdamW', 'pbAdamW', 'Lion', 'pbLion'])
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
     parser.add_argument('--gamma', default=0.8, type=float, help='control pb value')
     parser.add_argument('--momentum', default=0., type=float, help='pbSGD momentum')
     parser.add_argument('--batch-size', default=128, type=int, help='select batch size')
     parser.add_argument('--weight_decay', default=5e-4, type=float,help='weight decay for optimizers')
-    parser.add_argument('--device', default='0', type=str,help='setu GPU device ID')
-    parser.add_argument('--epoch', default=160, type=int,help='train epoch nums')
+    parser.add_argument('--device', default='0', type=str, help='setu GPU device ID')
+    parser.add_argument('--epoch', default=160, type=int, help='train epoch nums')
     parser.add_argument('--save-name', default=None, type=str, help='save history name')
     parser.add_argument('--wandb', action='store_true', help='use wandb')
 
@@ -105,6 +105,10 @@ def get_optimizer(args, net):
         return optim.AdamW(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     elif args.optim == 'pbAdamW':
         return pbAdamW(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+    elif args.optim == 'Lion':
+        return Lion(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    elif args.optim == 'pbLion':
+        return pbLion(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
 
 
 def build_model():
