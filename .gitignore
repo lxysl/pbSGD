@@ -49,3 +49,8 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+ImageNet/imagenet
+runs/
+wandb/
+ILSVRC2012_*
+data/

@@ -47,6 +47,7 @@ def get_parser():
     parser.add_argument('--epoch', default=160, type=int, help='train epoch nums')
     parser.add_argument('--save-name', default=None, type=str, help='save history name')
     parser.add_argument('--wandb', action='store_true', help='use wandb')
+    parser.add_argument('--comments', default='', type=str)
 
     args = parser.parse_args()
     return args
@@ -199,6 +200,17 @@ def test(epoch):
         wandb.log({'val loss': test_loss/(batch_idx+1), 'val acc': 100.*correct/total}, step=epoch)
 
 
+def adjust_learning_rate(optimizer, epoch):
+    if epoch < 60:
+        lr = args.lr
+    elif epoch < 130:
+        lr = args.lr * 0.1
+    else:
+        lr = args.lr * (1 / epoch)
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
+
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
@@ -236,6 +248,7 @@ step_decay = optim.lr_scheduler.StepLR(optimizer, step_size=60, gamma=0.1)
 
 for epoch in range(start_epoch, start_epoch + args.epoch):
     step_decay.step()
+    # adjust_learning_rate(optimizer, epoch)
     train(epoch)
     test(epoch)
 
