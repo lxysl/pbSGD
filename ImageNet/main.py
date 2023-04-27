@@ -44,7 +44,7 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
 parser.add_argument('--optim', default='SGDM', type=str, help='train optimizer',
                     choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad',
                              'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam', 'pbAdam2',
-                             'AdamW', 'pbAdamW'])
+                             'AdamW', 'pbAdamW', 'Lion', 'pbLion'])
 parser.add_argument('--gamma', default=0.8, type=float, help='control pb value')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
@@ -301,7 +301,7 @@ def main_worker(gpu, ngpus_per_node, args):
         num_workers=args.workers, pin_memory=True, sampler=val_sampler)
 
     if args.evaluate:
-        validate(val_loader, model, criterion, args)
+        validate(val_loader, model, criterion, epoch, writer, args)
         return
 
     for epoch in range(args.start_epoch, args.epochs):
@@ -360,6 +360,10 @@ def get_optimizer(args, net):
         return torch.optim.AdamW(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     elif args.optim == 'pbAdamW':
         return pbAdamW(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+    elif args.optim == 'Lion':
+        return Lion(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    elif args.optim == 'pbLion':
+        return pbLion(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, writer, device, args):

@@ -10,19 +10,19 @@
 #SBATCH --comment=hustHAIL
 
 echo "Activating conda environment..."
-conda activate pt2
+source activate pt2
 
 echo "Setting Wandb API key..."
 export WANDB_API_KEY=42f4584252c42654c6dc375454d6cbbc098ddbc4
 
 echo "Running ResNet50 with Adam optimizer and lr=0.001..."
-python ./ImageNet/main.py --arch resnet50 --optim Adam --lr 0.001 -p 100 --evaluate --dummy --epochs 1
+python ./ImageNet/main.py --arch resnet50 --optim Adam --lr 0.001 -p 100 --dummy --epochs 1
 
 echo "Running ResNet50 with AdamW optimizer and lr=0.001..."
-python ./ImageNet/main.py --arch resnet50 --optim AdamW --lr 0.001 -p 100 --evaluate --dummy --epochs 1
+python ./ImageNet/main.py --arch resnet50 --optim AdamW --lr 0.001 -p 100 --dummy --epochs 1
 
 echo "Running ResNet50 with Lion optimizer and lr=0.001..."
-python ./ImageNet/main.py --arch resnet50 --optim Lion --lr 0.001 -p 100 --evaluate --dummy --epochs 1
+python ./ImageNet/main.py --arch resnet50 --optim Lion --lr 0.001 -p 100 --dummy --epochs 1
 
 echo "Running ResNet50 with SGDM optimizer and lr=0.1..."
-python ./ImageNet/main.py --arch resnet50 --optim SGDM --lr 0.1 -p 100 --evaluate --dummy --epochs 1
+python ./ImageNet/main.py --arch resnet50 --optim SGDM --lr 0.1 -p 100 --dummy --epochs 1
