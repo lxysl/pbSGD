@@ -37,7 +37,7 @@ def get_parser():
     parser.add_argument('--optim', default='SGDM', type=str, help='train optimizer',
                         choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad',
                         'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam', 'pbAdam2',
-                        'AdamW', 'pbAdamW', 'Lion', 'pbLion'])
+                        'AdamW', 'pbAdamW', 'pbAdamW2', 'Lion', 'pbLion', 'pbLion2'])
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
     parser.add_argument('--gamma', default=0.8, type=float, help='control pb value')
     parser.add_argument('--momentum', default=0., type=float, help='pbSGD momentum')
@@ -106,10 +106,14 @@ def get_optimizer(args, net):
         return optim.AdamW(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     elif args.optim == 'pbAdamW':
         return pbAdamW(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+    elif args.optim == 'pbAdamW2':
+        return pbAdamW2(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
     elif args.optim == 'Lion':
         return Lion(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     elif args.optim == 'pbLion':
         return pbLion(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+    elif args.optim == 'pbLion2':
+        return pbLion2(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
 
 
 def build_model():

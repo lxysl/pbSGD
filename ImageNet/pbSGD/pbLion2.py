@@ -17,7 +17,7 @@ import torch
 from torch.optim.optimizer import Optimizer
 
 
-class pbLion(Optimizer):
+class pbLion2(Optimizer):
     r"""Implements Lion algorithm."""
 
     def __init__(self, params, lr=1e-4, gamma=1., betas=(0.9, 0.99), weight_decay=0.0):
@@ -27,6 +27,7 @@ class pbLion(Optimizer):
       params (iterable): iterable of parameters to optimize or dicts defining
         parameter groups
       lr (float, optional): learning rate (default: 1e-4)
+      gamma (float): Powerball function parameter (default: 1.0)
       betas (Tuple[float, float], optional): coefficients used for computing
         running averages of gradient and its square (default: (0.9, 0.99))
       weight_decay (float, optional): weight decay coefficient (default: 0)
@@ -65,7 +66,7 @@ class pbLion(Optimizer):
                 # Perform stepweight decay
                 p.data.mul_(1 - group['lr'] * group['weight_decay'])
 
-                grad = (torch.sign(p.grad) * torch.pow(torch.abs(p.grad), group['gamma'])).data
+                grad = p.grad
                 state = self.state[p]
                 # State initialization
                 if len(state) == 0:
@@ -77,7 +78,8 @@ class pbLion(Optimizer):
 
                 # Weight update
                 update = exp_avg * beta1 + grad * (1 - beta1)
-                p.add_(torch.sign(update), alpha=-group['lr'])
+                update = torch.sign(update) * torch.pow(torch.abs(update), group['gamma'])
+                p.add_(update, alpha=-group['lr'])
                 # Decay the momentum running average coefficient
                 exp_avg.mul_(beta2).add_(grad, alpha=1 - beta2)
 
