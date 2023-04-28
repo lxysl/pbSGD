@@ -34,7 +34,7 @@ model_names = sorted(name for name in models.__dict__
                      and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
-parser.add_argument('data', metavar='DIR', nargs='?', default='imagenet',
+parser.add_argument('data', metavar='DIR', nargs='?', default='ImageNet/imagenet',
                     help='path to dataset (default: imagenet)')
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                     choices=model_names,
@@ -98,6 +98,7 @@ best_acc1 = 0
 
 def main():
     args = parser.parse_args()
+    args.dataset = 'imagenet'
     cur_time = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
 
     if args.seed is not None:
@@ -136,7 +137,7 @@ def main():
         mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
     else:
         if args.wandb:
-            wandb.init(project="pbAdam", name=cur_time, config=vars(args))
+            wandb.init(project="pbAdam", name=cur_time, config=vars(args), mode='offline')
             print(vars(args))
         # Simply call main_worker function
         main_worker(args.gpu, ngpus_per_node, args)
