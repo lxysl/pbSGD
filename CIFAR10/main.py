@@ -30,8 +30,6 @@ if torch.__version__ >= '2.0.0':
     torch.set_float32_matmul_precision('high')
 history = collections.defaultdict(lambda: [])
 
-print('available device:', torch.cuda.device_count())
-
 
 def get_parser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
