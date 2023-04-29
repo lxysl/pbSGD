@@ -35,7 +35,7 @@ def get_parser():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
     parser.add_argument('--arch', default='resnet50', type=str, help='model arch')
     parser.add_argument('--optim', default='SGDM', type=str, help='train optimizer',
-                        choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad',
+                        choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad', 'pbAMSGrad',
                         'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam', 'pbAdam2',
                         'AdamW', 'pbAdamW', 'pbAdamW2', 'Lion', 'pbLion', 'pbLion2'])
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
@@ -102,6 +102,8 @@ def get_optimizer(args, net):
         return pbAdam(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
     elif args.optim == 'pbAdam2':
         return pbAdam2(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+    elif args.optim == 'pbAMSGrad':
+        return pbAdam(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay, amsgrad=True)
     elif args.optim == 'AdamW':
         return optim.AdamW(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     elif args.optim == 'pbAdamW':
