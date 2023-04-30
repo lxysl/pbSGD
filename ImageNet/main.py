@@ -44,8 +44,8 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                          ' | '.join(model_names) +
                          ' (default: resnet18)')
 parser.add_argument('--optim', default='SGDM', type=str, help='train optimizer',
-                    choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad',
-                             'pbSGD', 'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam', 'pbAdam2',
+                    choices=['SGD', 'SGDM', 'Adam', 'RMSprop', 'Adagrad', 'pbSGD',
+                             'pbSGDM', 'Adamax', 'AMSGrad', 'pbAdam', 'pbAdam2', 'pbAdam3',
                              'AdamW', 'pbAdamW', 'pbAdamW2', 'Lion', 'pbLion', 'pbLion2'])
 parser.add_argument('--gamma', default=0.8, type=float, help='control pb value')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
@@ -359,6 +359,8 @@ def get_optimizer(args, net):
         return pbAdam(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
     elif args.optim == 'pbAdam2':
         return pbAdam2(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
+    elif args.optim == 'pbAdam3':
+        return pbAdam3(net.parameters(), lr=args.lr, gamma=args.gamma, weight_decay=args.weight_decay)
     elif args.optim == 'AdamW':
         return torch.optim.AdamW(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     elif args.optim == 'pbAdamW':
